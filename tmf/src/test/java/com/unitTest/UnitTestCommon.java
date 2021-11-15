@@ -995,9 +995,14 @@ public class UnitTestCommon
      * @param methodName メソッド名
      * @param io "In":テストデータ投入。"Out":テストデータをマッチング。
      * @param testCaseNo TestCaseNo
+     * @param databaseFlg DB利用フラグ。true=利用する。false=利用しない。
      */
-    private void DBTestData(Connection connection, String className, String methodName, String io, int testCaseNo) throws Exception, FileNotFoundException, IOException
+    private void DBTestData(Connection connection, String className, String methodName, String io, int testCaseNo, Boolean databaseFlg) throws Exception, FileNotFoundException, IOException
     {
+        if(!databaseFlg){
+            return;
+        }
+
         // InDB.xlsxの列定義のデータタイプを取得
         String path = GetExcelPath(io, "DB", className, methodName);
         if(!Files.exists(Paths.get(path)))
@@ -1163,8 +1168,10 @@ public class UnitTestCommon
         // メンバー名を取得（配列の場合はIndexも）同一メンバー名でない場合は次のメンバーを探す
         int aryIndex = GetArrayData(memberNames.get(0), aryMember);
 
-        Field field = testClass.getClass().getDeclaredField(aryMember[0]);
-        if(field == null){
+        Field field = null;
+        try{
+            field = testClass.getClass().getDeclaredField(aryMember[0]);
+        }catch(Exception ex){
             AssertFail(testClass.getClass().getName() + "には" + aryMember[0] + "Fieldが存在しません。InTestClass.xlsxの" +
                 MEMBERSHEETNAME + "シートのTestDataを修正してください。");
         }
@@ -1337,7 +1344,11 @@ public class UnitTestCommon
 
         // メンバーフィールド、プロパティを取得
         ReadGridExcel readGridExcel = new ReadGridExcel(path);
-        readGridExcel.OpenSheet(MEMBERSHEETNAME, TOPROW, LEFTCOLUMN);
+        try{
+            readGridExcel.OpenSheet(MEMBERSHEETNAME, TOPROW, LEFTCOLUMN);
+        }catch(Exception ex){
+            AssertFail(ex.getMessage());
+        }
 
         // 上から順に、メンバーフィールド、プロパティを読んでいく
         do{
@@ -1359,13 +1370,14 @@ public class UnitTestCommon
      * @param className TestClass名
      * @param methodName TestMethod名
      * @param testCaseNo TestCaseNo
+     * @param databaseFlg DB利用フラグ。true=利用する。false=利用しない。
      * @throws Exception
      */ 
-    private void InitTestData(Connection connection, String className, String methodName, int testCaseNo) throws Exception
+    private void InitTestData(Connection connection, String className, String methodName, int testCaseNo, Boolean databaseFlg) throws Exception
     {
 
         // DBへ更新前テストデータを挿入
-        DBTestData(connection, className, methodName, "In", testCaseNo);
+        DBTestData(connection, className, methodName, "In", testCaseNo, databaseFlg);
 
         // クラスのメンバーへ更新前テストデータを挿入
         InitClassMemberData(className, methodName);
@@ -1376,13 +1388,14 @@ public class UnitTestCommon
      * @param connection DBのコネクション
      * @param className TestClass名
      * @param methodName TestMethod名
+     * @param databaseFlg DB利用フラグ。true=利用する。false=利用しない。
      * @throws Exception
      */
-    private void CheckTestData(Connection connection, String className, String methodName) throws Exception
+    private void CheckTestData(Connection connection, String className, String methodName, Boolean databaseFlg) throws Exception
     {
 
         // DBの更新後データとOutDB.xlsxを比較
-        DBTestData(connection, className, methodName, "Out", testCaseNo);
+        DBTestData(connection, className, methodName, "Out", testCaseNo, databaseFlg);
 
         // クラスのメンバーへ更新前テストデータを挿入
         // InitClassMemberData(className, methodName);
@@ -1390,9 +1403,10 @@ public class UnitTestCommon
 
     /**
      * Unit Test の前処理
+     * @param databaseFlg DB利用フラグ。true=利用する。false=利用しない。
      * @throws Exception
      */
-    protected void InitTest() throws Exception
+    protected void InitTest(Boolean databaseFlg) throws Exception
     {
 
         Connection connection = null;
@@ -1409,21 +1423,23 @@ public class UnitTestCommon
             // テストケース記述メソッド名設定
             testCaseMethodName = returnInfo.get("MethodName") + "TestCase";
             
-            // DB接続
-            DataSourceString dataSourceString = new DataSourceString();
-            try{
-                connection = dataSourceString.connectDB(poolDataSource);
-            }
-            catch(Exception ex){
-                throw new Exception("DBの接続に失敗しました。application.propertiesを修正して下さい。" + ex.getMessage());
-            }
+            if(databaseFlg){
+                // DB接続
+                DataSourceString dataSourceString = new DataSourceString();
+                try{
+                    connection = dataSourceString.connectDB(poolDataSource);
+                }
+                catch(Exception ex){
+                    throw new Exception("DBの接続に失敗しました。application.propertiesを修正して下さい。" + ex.getMessage());
+                }
 
-            // データベース情報を取得
-            databaseProduct = dataSourceString.GetDatabaseProduct(dataSourceName);
-            databaseName = dataSourceString.GetDatabaseName(dataSourceName);
+                // データベース情報を取得
+                databaseProduct = dataSourceString.GetDatabaseProduct(dataSourceName);
+                databaseName = dataSourceString.GetDatabaseName(dataSourceName);
 
-            // オートコミットオフ
-            connection.setAutoCommit(false);
+                // オートコミットオフ
+                connection.setAutoCommit(false);
+            }
 
             for(testCaseNo = 1; testCaseNo < 1000; testCaseNo++){
 
@@ -1434,24 +1450,21 @@ public class UnitTestCommon
                 SetErrorCaseNo(returnInfo.get("ClassName"), returnInfo.get("MethodName"));
         
                 // テストデータをDBとクラスのメンバーに投入する
-                InitTestData(connection, returnInfo.get("ClassName"), returnInfo.get("MethodName"), testCaseNo);
+                InitTestData(connection, returnInfo.get("ClassName"), returnInfo.get("MethodName"), testCaseNo, databaseFlg);
 
                 // テストケースメソッド取得
-                try{
-                    Method testMethod = this.getClass().getDeclaredMethod(testCaseMethodName, Connection.class, int.class);
-                    // テストケースメソッドコール
-                    testMethod.setAccessible(true);
-                    ret = (int)testMethod.invoke(this, connection, testCaseNo);
-                }
-                catch(Exception ex){
-                    AssertFail(testCaseMethodName + "メソッドが存在しない、または引数の型がConnection, intではない、または戻り値がint型ではありません。正しく作成してください。");
-                }
+                Method testMethod = this.getClass().getDeclaredMethod(testCaseMethodName, Connection.class, int.class);
+                // テストケースメソッドコール
+                testMethod.setAccessible(true);
+                ret = (int)testMethod.invoke(this, connection, testCaseNo);
 
                 // DB及びクラスのメンバーと更新後テストデータを比較
-                CheckTestData(connection, returnInfo.get("ClassName"), returnInfo.get("MethodName"));
+                CheckTestData(connection, returnInfo.get("ClassName"), returnInfo.get("MethodName"), databaseFlg);
 
                 //テストケースごとにロールバック
-                connection.rollback();
+                if(databaseFlg){
+                    connection.rollback();
+                }
 
                 // 最後のテストケースだったら終了
                 if (ret == 1)

@@ -110,6 +110,9 @@ public class ReadGridExcel {
         lastRowIndex = currentSheet.getLastRowNum();
 
         currentRow = currentSheet.getRow(firstRowIndex);
+        if(currentRow == null){
+            throw new Exception("「" + sheetName + "」Sheetに1行もデータが存在しません。");
+        }
         lastColumnIndex = currentRow.getLastCellNum() - 1;
     }
 
