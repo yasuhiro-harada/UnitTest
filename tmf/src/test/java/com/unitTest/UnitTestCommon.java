@@ -1,4 +1,4 @@
-package com.testDB;
+package com.unitTest;
 
 import oracle.ucp.jdbc.PoolDataSource;
 

@@ -15,7 +15,7 @@ public class WebUtil{
     //====================================================================================
     // IDを分割
     //====================================================================================
-    public static String[] splitId(String pathIds) throws TmfException,Exception{
+    public static String[] splitId(String pathIds) throws TmfException{
 
         String[] ids = null;
 
