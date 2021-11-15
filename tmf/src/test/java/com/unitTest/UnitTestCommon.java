@@ -824,7 +824,11 @@ public class UnitTestCommon
 
         // 1行目は列名（前提条件）のため一列目を先に読み取る。
         // 異なる場合は考慮しない
-        readGridExcel.OpenSheet(tableName, TOPROW, LEFTCOLUMN);
+        try{
+            readGridExcel.OpenSheet(tableName, TOPROW, LEFTCOLUMN);
+        }catch(Exception ex){
+            AssertFail(ex.getMessage());
+        }
         String cellValue  = readGridExcel.getNextCellValue();
         AreNotEqual(cellValue, "",
             io + "DB.xlsxの読み取りに失敗しました。1行目はDBの列名にしてください。");
@@ -1010,7 +1014,12 @@ public class UnitTestCommon
             return;
         }
 
-        ReadGridExcel readGridExcel = new ReadGridExcel(path);
+        ReadGridExcel readGridExcel = null;
+        try{
+            readGridExcel = new ReadGridExcel(path);
+        }catch(Exception ex){
+            AssertFail(ex.getMessage());
+        }
         List<String> tableNames = readGridExcel.GetAllSheeName();
         AddColumnType(connection, tableNames);
         // boolean tableCreatedFlg = false;
@@ -1343,8 +1352,9 @@ public class UnitTestCommon
         }
 
         // メンバーフィールド、プロパティを取得
-        ReadGridExcel readGridExcel = new ReadGridExcel(path);
+        ReadGridExcel readGridExcel = null;
         try{
+            readGridExcel = new ReadGridExcel(path);
             readGridExcel.OpenSheet(MEMBERSHEETNAME, TOPROW, LEFTCOLUMN);
         }catch(Exception ex){
             AssertFail(ex.getMessage());

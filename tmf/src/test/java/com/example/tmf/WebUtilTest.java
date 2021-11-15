@@ -42,7 +42,7 @@ class WebUtilTest extends UnitTestCommon
 				if(ids.length != 1){
 					AssertFail();
 				}
-				if(ids[0] != pathIds){
+				if(!ids[0].equals(pathIds)){
 					AssertFail();
 				}
 				break;

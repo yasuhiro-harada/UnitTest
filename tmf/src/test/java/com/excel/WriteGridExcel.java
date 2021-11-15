@@ -38,11 +38,14 @@ public class WriteGridExcel {
 
     /**
      * コンストラクタ
-     * @param path 書き込むパス付ファイル名(xlsx)
+     * @param sheetName 書き込むシート名
      * @throws Exception_FileNotFoundException_IOException
      */
     public WriteGridExcel(String sheetName) throws Exception, FileNotFoundException, IOException
     {
+        if(sheetName.isEmpty()){
+            throw new Exception("OpenするSheet名を指定してください。");
+        }
         // ワークブックの作成
         currentWorkBook = new XSSFWorkbook();
 
@@ -69,7 +72,7 @@ public class WriteGridExcel {
 
     /**
      * ファイルに保存
-     * @param path 保尊するpath付きファイル名
+     * @param path 保存するpath付きファイル名
      * @throws Exception
      */
     public void Sava(String path) throws Exception
