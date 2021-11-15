@@ -110,7 +110,9 @@ public class UnitTestCommon
      */
     private String GetExcelPath(String iO, String type, String className, String methodName)
     {
-        return "./src/test/UnitTests/" + className + "/" + methodName +
+        // classNameの末尾の"Test"を削除
+        String classNameWork = className.substring(0, className.length() - 4);
+        return "./src/test/UnitTestData/" + classNameWork + "/" + methodName +
                 "/TestCase" + String.format("%03d", testCaseNo) + "/" + iO + type + ".xlsx";
     }
 
