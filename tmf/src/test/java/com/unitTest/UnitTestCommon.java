@@ -62,8 +62,6 @@ public class UnitTestCommon
     private final String DIFFKUBUN = "DiffKubun";
     // Method名.Method名[Case番号]（メソッドごとにテストクラスがnewされる為、初期化される）
     private String errorCaseNo = "";
-    // TestCase番号（メソッドごとにテストクラスがnewされる為、初期化される）
-    private int testCaseNo = 0;
     // DB製品 
     private String databaseProduct = "";
     // DB名
@@ -93,8 +91,9 @@ public class UnitTestCommon
      * エラーケースNoを設定
      * @param className クラス名
      * @param methodName メソッド名
+     * @param testCaseNo test case No
      */
-    private void SetErrorCaseNo(String className, String methodName)
+    private void SetErrorCaseNo(String className, String methodName, int testCaseNo)
     {
         //Method名.Method名[Case番号]
         errorCaseNo = className + "." + methodName + "(TestCase:" + String.format("%03d", testCaseNo) + ")\r\n";
@@ -102,18 +101,19 @@ public class UnitTestCommon
 
     /**
      * TestDataExcelのpathを取得
-     * @param iO In：事前取り込み用TestData。Out：結果ｴﾋﾞﾃﾞﾝｽ確認用TestData。
+     * @param io In：事前取り込み用TestData。Out：結果ｴﾋﾞﾃﾞﾝｽ確認用TestData。
      * @param type DB：Database。TestClass：Test対象ClassのField(Property)
      * @param className クラス名
      * @param methodName メソッド名
+     * @param testCaseNo test case No
      * @return TestDataExcelのpath(file名付き)
      */
-    private String GetExcelPath(String iO, String type, String className, String methodName)
+    private String GetExcelPath(String io, String type, String className, String methodName, int testCaseNo)
     {
         // classNameの末尾の"Test"を削除
         String classNameWork = className.substring(0, className.length() - 4);
         return "./src/test/UnitTestData/" + classNameWork + "/" + methodName +
-                "/TestCase" + String.format("%03d", testCaseNo) + "/" + iO + type + ".xlsx";
+                "/TestCase" + String.format("%03d", testCaseNo) + "/" + io + type + ".xlsx";
     }
 
     /**
@@ -897,7 +897,18 @@ public class UnitTestCommon
         }
     }
 
-    private void OutputMergeResult(Connection connection, String className, String methodName, String tableName, String createdTable, List<String> colNames) throws Exception
+    /**
+     * 
+     * @param connection
+     * @param className
+     * @param methodName
+     * @param tableName
+     * @param createdTable
+     * @param colNames
+     * @param testCaseNo
+     * @throws Exception
+     */
+    private void OutputMergeResult(Connection connection, String className, String methodName, String tableName, String createdTable, List<String> colNames, int testCaseNo) throws Exception
     {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -980,7 +991,7 @@ public class UnitTestCommon
             }
             if(writeFlg){
                 // Excelの上書き保存
-                String path = GetExcelPath("Chk", "DB", className, methodName);
+                String path = GetExcelPath("Chk", "DB", className, methodName, testCaseNo);
                 writeGridExcel.Sava(path);
                 AssertFail("OutDBの結果と一致しません。" + path + "を確認して下さい。");
             }
@@ -1010,7 +1021,7 @@ public class UnitTestCommon
         }
 
         // InDB.xlsxの列定義のデータタイプを取得
-        String path = GetExcelPath(io, "DB", className, methodName);
+        String path = GetExcelPath(io, "DB", className, methodName, testCaseNo);
         if(!Files.exists(Paths.get(path)))
         {
             return;
@@ -1059,7 +1070,7 @@ public class UnitTestCommon
                 // MERGE文の発行
                 RunMerge(connection, tableName, createdTable, colNames);
                 // MERGE結果を確認
-                OutputMergeResult(connection, className, methodName, tableName, createdTable, colNames);
+                OutputMergeResult(connection, className, methodName, tableName, createdTable, colNames, testCaseNo);
             }
         }
     }
@@ -1103,10 +1114,11 @@ public class UnitTestCommon
      * @param aryMember aryMember[0] : メンバー名、aryMember[1]：配列の場合はIndex
      * @param aryIndex 配列のIndex
      * @param field メンバー名で指定されたFieldオブジェクト
+     * @param io "In":テストデータ投入。"Out":テストデータをマッチング。
      * @return 0:最深層、1:途中の階層
      * @throws Exception
      */
-    private int SetNestMemberData(Object testClass, List<String> memberNames, String value, String[] aryMember, int aryIndex, Field field) throws Exception
+    private int NestMemberData(Object testClass, List<String> memberNames, String value, String[] aryMember, int aryIndex, Field field, String io) throws Exception
     {
         // メンバ名にピリオドが無ければ処理しない
         if (memberNames.size() == 1){
@@ -1121,13 +1133,13 @@ public class UnitTestCommon
 
             Object[] objFields = (Object[])field.get(testClass);
             if(aryIndex < 0){
-                AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "は配列ですが、配列として指定されていません。InTestClass.xlsxの" +
+                AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "は配列ですが、配列として指定されていません。" + io + "TestClass.xlsxの" +
                     MEMBERSHEETNAME + "シートのTestDataを修正してください。");
             }
             else if(aryIndex > objFields.length - 1){
                 int aryCnt = objFields.length;
                 AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "はsize=" + Integer.toString(aryCnt) + "ですが、添え字として" +
-                    Integer.toString(aryIndex) + "が指定されています。InTestClass.xlsxの" + MEMBERSHEETNAME + "シートのTestDataを修正してください。");
+                    Integer.toString(aryIndex) + "が指定されています。" + io + "TestClass.xlsxの" + MEMBERSHEETNAME + "シートのTestDataを修正してください。");
             }
             
             nestTestClass = Array.get(objFields, aryIndex);
@@ -1136,13 +1148,13 @@ public class UnitTestCommon
         else if(field.getType().getName().equals("java.util.List")){
             List<?> objFields = (List<?>)field.get(testClass);
             if(aryIndex < 0){
-                AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "はListですが、配列として指定されていません。InTestClass.xlsxの" +
+                AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "はListですが、配列として指定されていません。" + io + "TestClass.xlsxの" +
                     MEMBERSHEETNAME + "シートのTestDataを修正してください。");
             }
             else if(aryIndex > objFields.size() - 1){
                 int aryCnt = objFields.size();
                 AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "はsize=" + Integer.toString(aryCnt) + "ですが、添え字として" +
-                    Integer.toString(aryIndex) + "が指定されています。InTestClass.xlsxの" + MEMBERSHEETNAME + "シートのTestDataを修正してください。");
+                    Integer.toString(aryIndex) + "が指定されています。" + io + "TestClass.xlsxの" + MEMBERSHEETNAME + "シートのTestDataを修正してください。");
             }
             nestTestClass = objFields.get(aryIndex);
         }
@@ -1151,13 +1163,13 @@ public class UnitTestCommon
         }
         
         if(nestTestClass == null){
-            AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "はnullです。" +
-                "InTestClass.xlsxの" + MEMBERSHEETNAME + "シートのTestDataまたはTestCodeを修正してください。");
+            AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "はnullです。" + 
+                io + "TestClass.xlsxの" + MEMBERSHEETNAME + "シートのTestDataまたはプログラムを修正してください。");
         }
         //ピリオド１個分削除し、１つ深い階層でCheckする
         memberNames.remove(0);
         // ピリオドがなくなるまで再帰的にSetMemberDataを呼ぶ
-        SetMemberData(nestTestClass, memberNames, value);
+        MemberData(nestTestClass, memberNames, value, io);
 
         // @return 0:最深層、1:途中の階層
         return 1;
@@ -1168,9 +1180,10 @@ public class UnitTestCommon
      * @param testClass RootのObjectクラス
      * @param memberNames メンバー名
      * @param value 設定する値
+     * @param io "In":テストデータ投入。"Out":テストデータをマッチング。
      * @throws Exception
      */
-    private void SetMemberData(Object testClass, List<String> memberNames, String value) throws Exception
+    private void MemberData(Object testClass, List<String> memberNames, String value, String io) throws Exception
     {
 
         // aryMember[0] : メンバー名、aryMember[1]：配列の場合はIndex
@@ -1183,7 +1196,7 @@ public class UnitTestCommon
         try{
             field = testClass.getClass().getDeclaredField(aryMember[0]);
         }catch(Exception ex){
-            AssertFail(testClass.getClass().getName() + "には" + aryMember[0] + "Fieldが存在しません。InTestClass.xlsxの" +
+            AssertFail(testClass.getClass().getName() + "には" + aryMember[0] + "Fieldが存在しません。" + io + "TestClass.xlsxの" +
                 MEMBERSHEETNAME + "シートのTestDataを修正してください。");
         }
 
@@ -1191,27 +1204,32 @@ public class UnitTestCommon
         field.setAccessible(true);
         
         // Excelで配列指定の場合は、その配列のIndex番目に入れ替える
-        if(SetNestMemberData(testClass, memberNames, value, aryMember, aryIndex, field) == 1){
+        if(NestMemberData(testClass, memberNames, value, aryMember, aryIndex, field, io) == 1){
             return;
         }
 
         // Fieldに値を設定
-        SetFieldValue(testClass, memberNames, value, aryMember, aryIndex, field);
+        if(io.equals("In")){
+            SetFieldValue(testClass, value, aryMember, aryIndex, field);
+        }
+        else if(io.equals("Out")){
+            CompareFieldValue(testClass, value, aryMember, aryIndex, field);
+        }
     }
 
     /**
      * Fieldに値を設定
      * @param testClass RootのObjectクラス
-     * @param memberNames メンバー名
      * @param value 設定する値
      * @param aryMember aryMember[0] : メンバー名、aryMember[1]：配列の場合はIndex
      * @param aryIndex 配列のIndex
      * @param field メンバー名で指定されたFieldオブジェクト
      * @throws Exception
      */
-    private void SetFieldValue(Object testClass, List<String> memberNames, String value, String[] aryMember, int aryIndex, Field field) throws Exception
+    private void SetFieldValue(Object testClass, String value, String[] aryMember, int aryIndex, Field field) throws Exception
     {
         boolean defaultFlg = false;
+        boolean blnWork = false;
 
         try{
             switch(field.getGenericType().getTypeName()){
@@ -1234,26 +1252,12 @@ public class UnitTestCommon
                     field.setFloat(testClass, Float.parseFloat(value));
                     break;
                 case "java.lang.Boolean":
+                    blnWork = ChangeBooleanExcelToJava(value);
+                    field.set(testClass, Boolean.valueOf(blnWork));
+                    break;
                 case "boolean":
-                    // true/false 変換
-                    boolean blnWork = false;
-                    value = value.toLowerCase();
-                    if(value.equals("0") || value.equals("true")){
-                        blnWork = true;
-                    }
-                    else if(value.equals("1") || value.equals("false")){
-                        blnWork = false;
-                    }
-                    else{
-                        AssertFail();
-                    }
-                    // 基本型と参照型の設定
-                    if(field.getGenericType().getTypeName().equals("java.lang.Boolean")){
-                        field.set(testClass, Boolean.valueOf(blnWork));
-                    }
-                    else{
-                        field.setBoolean(testClass, blnWork);
-                    }
+                    blnWork = ChangeBooleanExcelToJava(value);
+                    field.setBoolean(testClass, blnWork);
                     break;
                 case "java.lang.Double":
                     field.set(testClass, Double.valueOf(value));
@@ -1280,27 +1284,17 @@ public class UnitTestCommon
                     field.setShort(testClass, Short.parseShort(value));
                     break;
                 case "java.lang.Character":
+                    field.set(testClass, Character.valueOf(ChangeCharExcelToJava(value)));
+                    break;
                 case "char":
-                    if(value.length() > 1){
-                        AssertFail();
-                    }
-                    else if(value.length() == 0){
-                        value = " ";
-                    }
-                    // 基本型と参照型の設定
-                    if(field.getGenericType().getTypeName().equals("java.lang.Character")){
-                        field.set(testClass, Character.valueOf(value.charAt(0)));
-                    }
-                    else{
-                        field.setChar(testClass, value.charAt(0));
-                    }
+                    field.setChar(testClass, ChangeCharExcelToJava(value));
                     break;
                 default:
                     defaultFlg = true;
             }
         }catch(Exception ex){
             AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "は" +
-                field.getGenericType().getTypeName() + "型ですが、" + value + "が指定されています。InTestClass.xlsxの" +
+                field.getGenericType().getTypeName() + "型ですが、\"" + value + "\"が指定されています。InTestClass.xlsxの" +
                 MEMBERSHEETNAME + "シートのTestDataを修正してください。");
         }
 
@@ -1312,16 +1306,195 @@ public class UnitTestCommon
     }
 
     /**
+     * Fieldの値とExcelの値を比較
+     * @param testClass RootのObjectクラス
+     * @param value 設定する値
+     * @param aryMember aryMember[0] : メンバー名、aryMember[1]：配列の場合はIndex
+     * @param aryIndex 配列のIndex
+     * @param field メンバー名で指定されたFieldオブジェクト
+     * @throws Exception
+     */
+    private void CompareFieldValue(Object testClass, String value, String[] aryMember, int aryIndex, Field field) throws Exception
+    {
+        boolean defaultFlg = false;
+        boolean diffFlg = false;
+        boolean blnWork = false;
+
+        try{
+            switch(field.getGenericType().getTypeName()){
+                case "java.lang.String":
+                    if(!value.equals(field.get(testClass))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.String[]":
+                    if(!value.equals(Array.get(field.get(testClass), aryIndex))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Integer":
+                    if(!Integer.valueOf(value).equals(field.get(testClass))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "int":
+                    if(Integer.parseInt(value) != field.getInt(testClass)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Float":
+                    if(!Float.valueOf(value).equals(field.get(testClass))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "float":
+                    if(Float.parseFloat(value) != field.getFloat(testClass)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Boolean":
+                    blnWork = ChangeBooleanExcelToJava(value);
+                    if(!Boolean.valueOf(blnWork).equals(field.get(testClass))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "boolean":
+                    blnWork = ChangeBooleanExcelToJava(value);
+                    if(blnWork != field.getBoolean(testClass)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Double":
+                    if(!Double.valueOf(value).equals(field.get(testClass))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "double":
+                    if(Double.parseDouble(value) != field.getDouble(testClass)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Long":
+                    if(!Long.valueOf(value).equals(field.get(testClass))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "long":
+                    if(Long.parseLong(value) != field.getLong(testClass)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Byte":
+                    if(!Byte.valueOf(value).equals(field.get(testClass))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "byte":
+                    if(Byte.parseByte(value) != field.getByte(testClass)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Short":
+                    if(!Short.valueOf(value).equals(field.get(testClass))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "short":
+                    if(Short.parseShort(value) != field.getShort(testClass)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Character":
+                    if(!Character.valueOf(ChangeCharExcelToJava(value)).equals(field.get(testClass))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "char":
+                    if(ChangeCharExcelToJava(value) != field.getChar(testClass)){
+                        diffFlg = true;
+                    }
+                    break;
+                default:
+                    defaultFlg = true;
+            }
+        }catch(Exception ex){
+            AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "は" +
+                field.getGenericType().getTypeName() + "型ですが、\"" + value + "\"が指定されています。OutTestClass.xlsxの" +
+                MEMBERSHEETNAME + "シートのTestDataを修正してください。");
+        }
+
+        if(diffFlg){
+            String resultValue = "";
+            String argName = "";
+            if(aryIndex < 0){
+                resultValue = field.get(testClass).toString();
+                argName = aryMember[0];
+            }else{
+                resultValue = Array.get(field.get(testClass), aryIndex).toString();
+                argName = aryMember[0] + "[" + aryMember[1] + "]";
+            }
+            AssertFail(testClass.getClass().getName() + "のメンバー変数「" + argName + "」にプログラムの実行結果として\"" +
+                resultValue + "\"が設定されていますが、OutTestClass.xlsxには\"" + value + "\"が指定されています。" +
+                MEMBERSHEETNAME + "シートのTestDataかプログラムを確認してください。");
+        }
+        else if(defaultFlg){
+            AssertFail(testClass.getClass().getName() + "の" + aryMember[0] +
+            "は" + testClass.getClass().getTypeName() + "型ですが、" +
+            "この型は本versionでは未対応のデータ型です。管理者に連絡してください。");
+        }
+    }
+
+    /**
+     * Excedlで設定されているtrue/falseをJava形式に変換
+     * @param value
+     * @return 変換後の true or false
+     * @throws Exception
+     */
+    private boolean ChangeBooleanExcelToJava(String value) throws Exception
+    {
+        boolean ret = false;
+        value = value.toLowerCase();
+        if(value.equals("1") || value.equals("true")){
+            ret = true;
+        }
+        else if(value.equals("0") || value.equals("false")){
+            ret = false;
+        }
+        else{
+            AssertFail();
+        }
+        return ret;
+    }
+
+    /**
+     * Excedlで設定されているcharをJava形式に変換
+     * @param value
+     * @return 変換後の char
+     * @throws Exception
+     */
+    private char ChangeCharExcelToJava(String value) throws Exception
+    {
+        if(value.length() > 1){
+            AssertFail();
+        }
+        else if(value.length() == 0){
+            value = " ";
+        }
+        return value.charAt(0);
+    }
+
+    /**
      * メンバーフィールド、プロパティに値を設定する
      * @param memberName メーンバーField名
      * @param value 設定するテストデータ
+     * @param io "In":テストデータ投入。"Out":テストデータをマッチング。
      * @return
      * @throws Exception
      * @throws IllegalArgumentException
      * @throws NoSuchFieldException
      * @throws SecurityException
      */
-    private void SetMemberDataEntryPoint(String memberName, String value) throws Exception, IllegalArgumentException, NoSuchFieldException, SecurityException
+    private void MemberDataEntryPoint(String memberName, String value, String io) throws Exception, IllegalArgumentException, NoSuchFieldException, SecurityException
     {
         // this（継承先）のTestClassを取得
         Object testClass = this;
@@ -1333,21 +1506,23 @@ public class UnitTestCommon
         // Field名をピリオドで分割
         List<String> memberNames = new ArrayList<>(List.of(memberName.split(Pattern.quote("."))));
 
-        SetMemberData(testClass, memberNames, value);
+        MemberData(testClass, memberNames, value, io);
     }
 
     /**
      * クラスのメンバーへ更新前テストデータを挿入
      * @param className TestClass名
      * @param methodName TestMethod名
+     * @param io "In":テストデータ投入。"Out":テストデータをマッチング。
+     * @param testCaseNo test case No
      * @throws FileNotFoundException
      * @throws IOException
      * @throws Exception
      */
-    private void InitClassMemberData(String className, String methodName) throws FileNotFoundException, IOException, Exception
+    private void ClassMemberData(String className, String methodName, String io, int testCaseNo) throws FileNotFoundException, IOException, Exception
     {
         // InMember.xlsxの列定義のデータタイプを取得
-        String path = GetExcelPath("In", "TestClass", className, methodName);
+        String path = GetExcelPath(io, "TestClass", className, methodName, testCaseNo);
         if(!Files.exists(Paths.get(path)))
         {
             return;
@@ -1372,7 +1547,7 @@ public class UnitTestCommon
             // 値を取得
             String fieldValue = readGridExcel.getNextCellValue();
             // メンバーフィールド、プロパティに値を設定する
-            SetMemberDataEntryPoint(fieldName, fieldValue);
+            MemberDataEntryPoint(fieldName, fieldValue, io);
         }while (readGridExcel.moveNextRow());
     }
 
@@ -1383,34 +1558,17 @@ public class UnitTestCommon
      * @param methodName TestMethod名
      * @param testCaseNo TestCaseNo
      * @param databaseFlg DB利用フラグ。true=利用する。false=利用しない。
+     * @param io "In":テストデータ投入。"Out":テストデータをマッチング。
      * @throws Exception
      */ 
-    private void InitTestData(Connection connection, String className, String methodName, int testCaseNo, Boolean databaseFlg) throws Exception
+    private void TestData(Connection connection, String className, String methodName, int testCaseNo, Boolean databaseFlg, String io) throws Exception
     {
 
         // DBへ更新前テストデータを挿入
-        DBTestData(connection, className, methodName, "In", testCaseNo, databaseFlg);
+        DBTestData(connection, className, methodName, io, testCaseNo, databaseFlg);
 
         // クラスのメンバーへ更新前テストデータを挿入
-        InitClassMemberData(className, methodName);
-    }
-
-    /**
-     * DB及びクラスのメンバーと更新後テストデータを比較
-     * @param connection DBのコネクション
-     * @param className TestClass名
-     * @param methodName TestMethod名
-     * @param databaseFlg DB利用フラグ。true=利用する。false=利用しない。
-     * @throws Exception
-     */
-    private void CheckTestData(Connection connection, String className, String methodName, Boolean databaseFlg) throws Exception
-    {
-
-        // DBの更新後データとOutDB.xlsxを比較
-        DBTestData(connection, className, methodName, "Out", testCaseNo, databaseFlg);
-
-        // クラスのメンバーへ更新前テストデータを挿入
-        // InitClassMemberData(className, methodName);
+        ClassMemberData(className, methodName, io, testCaseNo);
     }
 
     /**
@@ -1453,16 +1611,16 @@ public class UnitTestCommon
                 connection.setAutoCommit(false);
             }
 
-            for(testCaseNo = 1; testCaseNo < 1000; testCaseNo++){
+            for(int testCaseNo = 1; testCaseNo < 1000; testCaseNo++){
 
                 // 例外エラー用フラグの初期化
                 exceptionFlg = false;
 
                 // エラーケースNo（Method名.Method名[Case番号]）
-                SetErrorCaseNo(returnInfo.get("ClassName"), returnInfo.get("MethodName"));
+                SetErrorCaseNo(returnInfo.get("ClassName"), returnInfo.get("MethodName"), testCaseNo);
         
                 // テストデータをDBとクラスのメンバーに投入する
-                InitTestData(connection, returnInfo.get("ClassName"), returnInfo.get("MethodName"), testCaseNo, databaseFlg);
+                TestData(connection, returnInfo.get("ClassName"), returnInfo.get("MethodName"), testCaseNo, databaseFlg, "In");
 
                 // テストケースメソッド取得
                 Method testMethod = this.getClass().getDeclaredMethod(testCaseMethodName, Connection.class, int.class);
@@ -1471,7 +1629,7 @@ public class UnitTestCommon
                 ret = (int)testMethod.invoke(this, connection, testCaseNo);
 
                 // DB及びクラスのメンバーと更新後テストデータを比較
-                CheckTestData(connection, returnInfo.get("ClassName"), returnInfo.get("MethodName"), databaseFlg);
+                TestData(connection, returnInfo.get("ClassName"), returnInfo.get("MethodName"), testCaseNo, databaseFlg, "Out");
 
                 //テストケースごとにロールバック
                 if(databaseFlg){
