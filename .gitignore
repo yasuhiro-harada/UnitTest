@@ -24,3 +24,4 @@ hs_err_pid*
 
 # result compared DB
 ChkDB.xlsx
+/tmf/src/test/UnitTestData/Database/setWherePk/TestCase001/ChkDB.xlsx
