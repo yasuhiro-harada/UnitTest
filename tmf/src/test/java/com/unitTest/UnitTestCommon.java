@@ -1236,9 +1236,6 @@ public class UnitTestCommon
                 case "java.lang.String":
                     field.set(testClass, value);
                     break;
-                case "java.lang.String[]":
-                    Array.set(field.get(testClass), aryIndex, value);
-                    break;
                 case "java.lang.Integer":
                     field.set(testClass, Integer.valueOf(value));
                     break;
@@ -1289,6 +1286,59 @@ public class UnitTestCommon
                 case "char":
                     field.setChar(testClass, ChangeCharExcelToJava(value));
                     break;
+                case "java.lang.String[]":
+                    Array.set(field.get(testClass), aryIndex, value);
+                    break;
+                case "java.lang.Integer[]":
+                    Array.set(field.get(testClass), aryIndex, Integer.valueOf(value));
+                    break;
+                case "int[]":
+                    Array.setInt(field.get(testClass), aryIndex, Integer.parseInt(value));
+                    break;
+                case "java.lang.Float[]":
+                    Array.set(field.get(testClass), aryIndex, Float.valueOf(value));
+                    break;
+                case "float[]":
+                    Array.setFloat(field.get(testClass), aryIndex, Float.parseFloat(value));
+                    break;
+                case "java.lang.Boolean[]":
+                    blnWork = ChangeBooleanExcelToJava(value);
+                    Array.set(field.get(testClass), aryIndex, Boolean.valueOf(blnWork));
+                    break;
+                case "boolean[]":
+                    blnWork = ChangeBooleanExcelToJava(value);
+                    Array.setBoolean(field.get(testClass), aryIndex, blnWork);
+                    break;
+                case "java.lang.Double[]":
+                    Array.set(field.get(testClass), aryIndex, Double.valueOf(value));
+                    break;
+                case "double[]":
+                    Array.setDouble(field.get(testClass), aryIndex, Double.parseDouble(value));
+                    break;
+                case "java.lang.Long[]":
+                    Array.set(field.get(testClass), aryIndex, Long.valueOf(value));
+                    break;
+                case "long[]":
+                    Array.setLong(field.get(testClass), aryIndex, Long.parseLong(value));
+                    break;
+                case "java.lang.Byte[]":
+                    Array.set(field.get(testClass), aryIndex, Byte.valueOf(value));
+                    break;
+                case "byte[]":
+                    Array.setByte(field.get(testClass), aryIndex, Byte.parseByte(value));
+                    break;
+                case "java.lang.Short[]":
+                    Array.set(field.get(testClass), aryIndex, Short.valueOf(value));
+                    break;
+                case "short[]":
+                    Array.setShort(field.get(testClass), aryIndex, Short.parseShort(value));
+                    break;
+                case "java.lang.Character[]":
+                    Array.set(field.get(testClass), aryIndex, Character.valueOf(ChangeCharExcelToJava(value)));
+                    break;
+                case "char[]":
+                    Array.setChar(field.get(testClass), aryIndex, ChangeCharExcelToJava(value));
+                    break;
                 default:
                     defaultFlg = true;
             }
@@ -1319,16 +1369,12 @@ public class UnitTestCommon
         boolean defaultFlg = false;
         boolean diffFlg = false;
         boolean blnWork = false;
+        boolean booleanFlg = false;
 
         try{
             switch(field.getGenericType().getTypeName()){
                 case "java.lang.String":
                     if(!value.equals(field.get(testClass))){
-                        diffFlg = true;
-                    }
-                    break;
-                case "java.lang.String[]":
-                    if(!value.equals(Array.get(field.get(testClass), aryIndex))){
                         diffFlg = true;
                     }
                     break;
@@ -1353,12 +1399,14 @@ public class UnitTestCommon
                     }
                     break;
                 case "java.lang.Boolean":
+                    booleanFlg = true;
                     blnWork = ChangeBooleanExcelToJava(value);
                     if(!Boolean.valueOf(blnWork).equals(field.get(testClass))){
                         diffFlg = true;
                     }
                     break;
                 case "boolean":
+                    booleanFlg = true;
                     blnWork = ChangeBooleanExcelToJava(value);
                     if(blnWork != field.getBoolean(testClass)){
                         diffFlg = true;
@@ -1414,6 +1462,95 @@ public class UnitTestCommon
                         diffFlg = true;
                     }
                     break;
+                case "java.lang.String[]":
+                    if(!value.equals(Array.get(field.get(testClass), aryIndex))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Integer[]":
+                    if(!Integer.valueOf(value).equals(Array.get(field.get(testClass), aryIndex))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "int[]":
+                    if(Integer.parseInt(value) != Array.getInt(field.get(testClass), aryIndex)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Float[]":
+                    if(!Float.valueOf(value).equals(Array.get(field.get(testClass), aryIndex))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "float[]":
+                    if(Float.parseFloat(value) != Array.getFloat(field.get(testClass), aryIndex)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Boolean[]":
+                    booleanFlg = true;
+                    blnWork = ChangeBooleanExcelToJava(value);
+                    if(!Boolean.valueOf(blnWork).equals(Array.get(field.get(testClass), aryIndex))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "boolean[]":
+                    booleanFlg = true;
+                    blnWork = ChangeBooleanExcelToJava(value);
+                    if(blnWork != Array.getBoolean(field.get(testClass), aryIndex)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Double[]":
+                    if(!Double.valueOf(value).equals(Array.get(field.get(testClass), aryIndex))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "double[]":
+                    if(Double.parseDouble(value) != Array.getDouble(field.get(testClass), aryIndex)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Long[]":
+                    if(!Long.valueOf(value).equals(Array.get(field.get(testClass), aryIndex))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "long[]":
+                    if(Long.parseLong(value) != Array.getLong(field.get(testClass), aryIndex)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Byte[]":
+                    if(!Byte.valueOf(value).equals(Array.get(field.get(testClass), aryIndex))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "byte[]":
+                    if(Byte.parseByte(value) != Array.getByte(field.get(testClass), aryIndex)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Short[]":
+                    if(!Short.valueOf(value).equals(Array.get(field.get(testClass), aryIndex))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "short[]":
+                    if(Short.parseShort(value) != Array.getShort(field.get(testClass), aryIndex)){
+                        diffFlg = true;
+                    }
+                    break;
+                case "java.lang.Character[]":
+                    if(!Character.valueOf(ChangeCharExcelToJava(value)).equals(Array.get(field.get(testClass), aryIndex))){
+                        diffFlg = true;
+                    }
+                    break;
+                case "char[]":
+                    if(ChangeCharExcelToJava(value) != Array.getChar(field.get(testClass), aryIndex)){
+                        diffFlg = true;
+                    }
+                    break;
                 default:
                     defaultFlg = true;
             }
@@ -1432,6 +1569,13 @@ public class UnitTestCommon
             }else{
                 resultValue = Array.get(field.get(testClass), aryIndex).toString();
                 argName = aryMember[0] + "[" + aryMember[1] + "]";
+            }
+            if(booleanFlg){
+                if(value == "1"){
+                    value = "false";
+                }else{
+                    value = "true";
+                }
             }
             AssertFail(testClass.getClass().getName() + "のメンバー変数「" + argName + "」にプログラムの実行結果として\"" +
                 resultValue + "\"が設定されていますが、OutTestClass.xlsxには\"" + value + "\"が指定されています。" +
@@ -1510,7 +1654,7 @@ public class UnitTestCommon
     }
 
     /**
-     * クラスのメンバーへ更新前テストデータを挿入
+     * クラスのメンバーへ更新前テストデータを挿入 or マッチング
      * @param className TestClass名
      * @param methodName TestMethod名
      * @param io "In":テストデータ投入。"Out":テストデータをマッチング。

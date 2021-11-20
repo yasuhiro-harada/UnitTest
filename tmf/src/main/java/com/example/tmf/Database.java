@@ -58,19 +58,19 @@ public class Database implements Serializable{
     // Sql文のDelete句
     String deleteSql = "*";
 
-    Integer aaa = 100;
-    int bbb = 100;
+    Integer[] aaa = {100, 200};
+    int[] bbb = {100, 200};
     String[] ccc = {"first", "second"};
-    Long ddd = 100l;
-    long eee = 100;
-    Float fff = 100.99f;
-    float ggg = 100.99f;
-    Double hhh = 100.99;
-    double iii = 100.99;
-    Character jjj = '9';
-    char kkk = '9';
-    Boolean lll = true;
-    boolean mmm = true;
+    Long[] ddd = {100L, 200L};
+    long[] eee = {100, 200};
+    Float[] fff = {100.99f, 200.99f};
+    float[] ggg = {100.99f, 200.99f};
+    Double[] hhh = {100.99, 200.99};
+    double[] iii = {100.99, 200.99};
+    Character[] jjj = {'9', '0'};
+    char[] kkk = {'9', '0'};
+    Boolean[] lll = {true, true};
+    boolean[] mmm = {true, true};
 
     //====================================================================================
     // ID(PrimaryKey)での検索WHERE句作成
