@@ -61,7 +61,7 @@ public class TmfException extends Exception{
                 tmfErrorCode.setCode("E-007");
                 HttpStatus = org.springframework.http.HttpStatus.BAD_REQUEST;
                 break;
-            case "IDの指定とRequestBodyが一致しない":
+            case "QueryStringとRequestBodyのIDが一致しない":
                 tmfErrorCode.setCode("E-008");
                 HttpStatus = org.springframework.http.HttpStatus.BAD_REQUEST;
                 break;
@@ -145,6 +145,19 @@ public class TmfException extends Exception{
                 tmfErrorCode.setCode("E-028");
                 HttpStatus = org.springframework.http.HttpStatus.BAD_REQUEST;
                 break;
+            case "ConfirmCancelMethodに不正な値が指定されている":
+                tmfErrorCode.setCode("E-029");
+                HttpStatus = org.springframework.http.HttpStatus.BAD_REQUEST;
+                break;
+            case "methodに不正な値が指定されている":
+                tmfErrorCode.setCode("E-030");
+                HttpStatus = org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED;
+                break;
+            case "Kafkaのproduceに失敗":
+                tmfErrorCode.setCode("E-030");
+                HttpStatus = org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+                break;
+                
             default:
                 tmfErrorCode.setCode("E-999");
                 HttpStatus = org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;

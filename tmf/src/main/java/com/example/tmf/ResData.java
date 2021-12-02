@@ -2,6 +2,7 @@ package com.example.tmf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -16,7 +17,9 @@ import lombok.Setter;
 //=========================================================
 @Getter
 @Setter
-public class ResData{
+public class ResData implements Serializable{
+
+    private static final long serialVersionUID = 1L;
 
     // ResponseBody(ID+Href+FetchData)
     @JsonInclude(JsonInclude.Include.NON_NULL)
