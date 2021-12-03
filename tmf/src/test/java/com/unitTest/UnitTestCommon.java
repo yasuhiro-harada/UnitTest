@@ -43,6 +43,7 @@ public class UnitTestCommon
     @Value("${rdbms.dataSourceName}") String dataSourceName;
     @Value("${rdbms.user}") String user;
     @Value("${rdbms.password}") String password;
+    @Value("${spring.test.database.data.before-test}") String dataBeforeTest;
 
     // コネクションプール
     @Autowired
@@ -1044,8 +1045,12 @@ public class UnitTestCommon
             // tableCreatedFlg = false;
 
             if(io.equals("In")){
-                // 該当テーブルを削除
+                // 該当テーブルを削除。テスト前のデータを消して良ければ削除。
+                // (test対象とconnectionのトランザクションが共有できないUnitTestやtest対象が別システムでDBを更新する場合など)
                 DeleteTable(connection, tableName);
+                if(dataBeforeTest.equals("delete")){
+                    connection.commit();
+                }
             }
             else if(io.equals("Out")){
                 // 想定する結果の一時テーブル名を作成
@@ -1771,6 +1776,27 @@ public class UnitTestCommon
                 // テストケースメソッドコール
                 testMethod.setAccessible(true);
                 ret = (int)testMethod.invoke(this, connection, testCaseNo);
+
+                // テスト対象が更新した結果もテスト後の比較に含めるために再接続
+                // (test対象とconnectionのトランザクションが共有できないUnitTestやtest対象が別システムでDBを更新する場合など)
+                if(databaseFlg && dataBeforeTest.equals("delete")){
+                    connection.commit();
+                    connection.close();;
+                    DataSourceString dataSourceString = new DataSourceString();
+                    try{
+                        connection = dataSourceString.connectDB(poolDataSource);
+                    }
+                    catch(Exception ex){
+                        throw new Exception("DBの接続に失敗しました。application.propertiesを修正して下さい。" + ex.getMessage());
+                    }
+    
+                    // データベース情報を取得
+                    databaseProduct = dataSourceString.GetDatabaseProduct(dataSourceName);
+                    databaseName = dataSourceString.GetDatabaseName(dataSourceName);
+    
+                    // オートコミットオフ
+                    connection.setAutoCommit(false);    
+                }
 
                 // DB及びクラスのメンバーと更新後テストデータを比較
                 TestData(connection, returnInfo.get("ClassName"), returnInfo.get("MethodName"), testCaseNo, databaseFlg, "Out");
