@@ -16,6 +16,7 @@ public class ReqData implements Serializable{
     private static final long serialVersionUID = 1L;
 
     private String txId = "";
+    private String pathId = "";
     private String method = "";
     private String confirmCancelMethod = "";
     private String offset = "";

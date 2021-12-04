@@ -2,23 +2,34 @@ package com.example.tmf;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.unitTest.UnitTestCommon;
 
 @SpringBootTest
 class StubTest extends UnitTestCommon
 {
+	@Autowired
+	StubMessageConsumer stubMessageConsumer;
+
 	// 単体テスト用クラスの宣言
-	ReqData TestClass = new ReqData();	
+	TestData TestClass = new TestData();	
 
 	@Test
 	void MessageCrud() throws Exception
 	{
+		// TestClassのListやMapや配列などはテスト前にここで確保
+		for(int i = 0; i < 10; i++){
+			MessageKey messageKey = new MessageKey();
+			TestClass.reqMessageKeys.add(messageKey);
+			ReqData reqData = new ReqData();
+			TestClass.reqDatas.add(reqData);
+			// messageKey = new MessageKey();
+			// TestClass.resMessageKeys.add(messageKey);
+			// ResData resData = new ResData();
+			// TestClass.resDatas.add(resData);
+		}
 		InitTest(true);
 	}
 
@@ -26,13 +37,7 @@ class StubTest extends UnitTestCommon
 	{
 		int ret = 0;
 
-		StubMessageConsumer stubMessageConsumer = new StubMessageConsumer();
 		StubMessageProducer stubMessageProducer = new StubMessageProducer();
-		List<MessageKey> messageKeys = new ArrayList<MessageKey>();
-		List<ResData> resDatas = new ArrayList<ResData>();
-		MessageKey messageKey = new MessageKey();
-		ReqData reqData = new ReqData();
-		messageKey.setMessageId("ABCDE");
 		
 		//*********************************
 		// Test Case
@@ -41,9 +46,14 @@ class StubTest extends UnitTestCommon
 
 			// GET Test
 			case 1:
-				
-				break;
-
+				stubMessageProducer.produce(TestClass.reqMessageKeys.get(0), TestClass.reqDatas.get(0));
+				while(true){
+					stubMessageConsumer.consume(TestClass.resMessageKeys, TestClass.resDatas);
+					if(TestClass.resMessageKeys.size() > 0){
+						break;
+					}
+					Thread.sleep(10);
+				}
 			default:
 				ret = 1;
 

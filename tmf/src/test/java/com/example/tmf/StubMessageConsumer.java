@@ -14,13 +14,15 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 
+@Configuration
 public class StubMessageConsumer{
 
-    @Value("${spring.kafka.consumer.bootstrap-servers}") String consumerBootstrapServers;
+    @Value("${spring.kafka.producer.bootstrap-servers}") String consumerBootstrapServers;
     @Value("${spring.kafka.consumer.group-id}") String consumerGroupId;
     @Value("${spring.kafka.consumer.auto-offset-reset}") String consumerAutoOffsetReset;
-    @Value("${spring.kafka.consumer.topic}") String consumerTopic;
+    @Value("${spring.kafka.producer.topic}") String consumerTopic;
     @Value("${spring.kafka.consumer.timeout}") String consumerTimeout;
     @Value("${spring.kafka.consumer.frequency}") String consumerFrequency;
 	

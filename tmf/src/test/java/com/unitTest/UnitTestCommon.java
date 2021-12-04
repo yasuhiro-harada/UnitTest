@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.example.tmf.DataSourceString;
 import com.excel.ReadGridExcel;
 import com.excel.WriteGridExcel;
 
@@ -1045,12 +1046,8 @@ public class UnitTestCommon
             // tableCreatedFlg = false;
 
             if(io.equals("In")){
-                // 該当テーブルを削除。テスト前のデータを消して良ければ削除。
-                // (test対象とconnectionのトランザクションが共有できないUnitTestやtest対象が別システムでDBを更新する場合など)
+                // 該当テーブルを削除
                 DeleteTable(connection, tableName);
-                if(dataBeforeTest.equals("delete")){
-                    connection.commit();
-                }
             }
             else if(io.equals("Out")){
                 // 想定する結果の一時テーブル名を作成
@@ -1077,6 +1074,11 @@ public class UnitTestCommon
                 // MERGE結果を確認
                 OutputMergeResult(connection, className, methodName, tableName, createdTable, colNames, testCaseNo);
             }
+        }
+        // テスト前のデータを消して良ければ削除。
+        // (test対象とconnectionのトランザクションが共有できないUnitTestやtest対象が別システムでDBを更新する場合など)
+        if(dataBeforeTest.equals("delete")){
+            connection.commit();
         }
     }
 
@@ -1152,14 +1154,28 @@ public class UnitTestCommon
         // Listの場合、添え字を使って値を取り出す
         else if(field.getType().getName().equals("java.util.List")){
             List<?> objFields = (List<?>)field.get(testClass);
+            int aryCnt = objFields.size();
             if(aryIndex < 0){
                 AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "はListですが、配列として指定されていません。" + io + "TestClass.xlsxの" +
                     MEMBERSHEETNAME + "シートのTestDataを修正してください。");
             }
-            else if(aryIndex > objFields.size() - 1){
-                int aryCnt = objFields.size();
+            else if(aryIndex > aryCnt - 1){
+                // if(io.equals("Out")){
                 AssertFail(testClass.getClass().getName() + "の" + aryMember[0] + "はsize=" + Integer.toString(aryCnt) + "ですが、添え字として" +
-                    Integer.toString(aryIndex) + "が指定されています。" + io + "TestClass.xlsxの" + MEMBERSHEETNAME + "シートのTestDataを修正してください。");
+                Integer.toString(aryIndex) + "が指定されています。" + io + "TestClass.xlsxの" + MEMBERSHEETNAME + "シートのTestDataを修正してください。");
+                // }else if(io.equals("In")){
+                //     // List<?>の?のクラス名を取得
+                //     String type = field.getAnnotatedType().getType().getTypeName();
+                //     String[] types = type.split("<");
+                //     types = types[1].split(">");
+                //     type = types[0];
+                //     while(aryIndex >= objFields.size()){
+                //         Class<?> genericClass = Class.forName(type);
+                //         objFields.add(genericClass);
+                //         System.out.println("x");
+                //     }
+
+                // }
             }
             nestTestClass = objFields.get(aryIndex);
         }
@@ -1690,7 +1706,7 @@ public class UnitTestCommon
         do{
             // FieldNameを取得
             String fieldName = readGridExcel.getNextCellValue();
-            if(fieldName.equals("")){
+            if(fieldName == null || fieldName.equals("")){
                 break;
             }
             // 値を取得
