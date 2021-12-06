@@ -7,11 +7,13 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 
+@Configuration
 public class StubMessageProducer{
 
-	@Value("${spring.kafka.producer.bootstrap-servers}") String producerBootstrapServers = "localhost:9092";
-    @Value("${spring.kafka.producer.topic}") String producerTopic = "consumer";
+	@Value("${spring.kafka.consumer.bootstrap-servers}") String producerBootstrapServers;
+    @Value("${spring.kafka.consumer.topic}") String producerTopic;
 	
 	public void produce(MessageKey messageKey, ReqData reqData) throws TmfException
 	{

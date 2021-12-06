@@ -13,6 +13,9 @@ class StubTest extends UnitTestCommon
 	@Autowired
 	StubMessageConsumer stubMessageConsumer;
 
+	@Autowired
+	StubMessageProducer stubMessageProducer;
+
 	// 単体テスト用クラスの宣言
 	TestData TestClass = new TestData();	
 
@@ -37,7 +40,7 @@ class StubTest extends UnitTestCommon
 	{
 		int ret = 0;
 
-		StubMessageProducer stubMessageProducer = new StubMessageProducer();
+		// StubMessageProducer stubMessageProducer = new StubMessageProducer();
 		
 		//*********************************
 		// Test Case
